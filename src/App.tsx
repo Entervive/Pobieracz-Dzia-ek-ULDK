@@ -1,41 +1,50 @@
-import React, { useState } from 'react'
-import { Download, MapPin } from 'lucide-react'
+import React, { useState } from "react";
+import { Download, MapPin } from "lucide-react";
+import { parseULDKResponse, createDXFFile } from "./utils/geoConverter";
 
 function App() {
-  const [plotId, setPlotId] = useState('')
-  const [format, setFormat] = useState('DWG')
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPlot, setShowPlot] = useState(false)
+  const [plotId, setPlotId] = useState("");
+  const [format, setFormat] = useState("DXF");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPlot, setShowPlot] = useState(false);
 
   const handleDownload = async () => {
-    if (!plotId) return
-    setIsLoading(true)
+    if (!plotId) return;
+    setIsLoading(true);
     try {
       const response = await fetch(
-        `https://uldk.gugik.gov.pl/?request=GetParcelById&id=${plotId}&result=${format.toLowerCase()}`
-      )
+        `https://uldk.gugik.gov.pl/?request=GetParcelById&id=${plotId}`
+      );
       if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `plot_${plotId}.${format.toLowerCase()}`
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
+        const data = await response.text();
+        const geometry = parseULDKResponse(data);
+
+        if (format === "DXF") {
+          const blob = createDXFFile(geometry);
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `plot_${plotId}.dxf`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } else {
+          throw new Error("DWG format is not supported in this environment");
+        }
       }
     } catch (error) {
-      console.error('Error downloading plot:', error)
+      console.error("Error downloading plot:", error);
+      alert("Failed to download plot. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleShowPlot = () => {
     if (plotId) {
-      setShowPlot(true)
+      setShowPlot(true);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
@@ -46,7 +55,7 @@ function App() {
             ULDK Plot Downloader
           </h1>
           <p className="text-gray-600 mt-2">
-            Enter plot ID to view and download in DWG or DXF format
+            Enter plot ID to view and download in DXF format
           </p>
         </div>
 
@@ -80,10 +89,13 @@ function App() {
               value={format}
               onChange={(e) => setFormat(e.target.value)}
               className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              disabled
             >
-              <option value="DWG">DWG</option>
               <option value="DXF">DXF</option>
             </select>
+            <p className="text-sm text-gray-500 mt-1">
+              DWG format is not supported in this environment
+            </p>
           </div>
 
           <div className="flex gap-4">
@@ -119,7 +131,7 @@ function App() {
               </h2>
               <div className="w-full h-[500px] rounded-lg overflow-hidden shadow-lg">
                 <iframe
-                  src={`https://mapy.geoportal.gov.pl/imap/Imgp_2.html?locale=pl&gui=new&sessionID=0&crs=EPSG:2180&bbox=0,0,0,0&crosshair=marker&identify=on&search=on&searchType=parcel&searchText=${plotId}`}
+                  src={`https://mapy.geoportal.gov.pl/imap/?identifyParcel=${plotId}`}
                   title="ULDK Plot Visualization"
                   className="w-full h-full border-0"
                   allowFullScreen
@@ -130,7 +142,7 @@ function App() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
