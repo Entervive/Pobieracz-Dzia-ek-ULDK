@@ -43,6 +43,7 @@ function App() {
       const data = await response.text();
       console.log("ULDK Response:", data);
 
+      // Set debug info
       setDebugInfo(`
 Response Status: ${response.status}
 Response Length: ${data.length}
@@ -60,6 +61,7 @@ Contains Error: ${
         throw new Error("Empty response from ULDK API");
       }
 
+      // Try to parse the geometry
       const geometry = parseULDKResponse(data);
       console.log("Parsed Geometry:", geometry);
 
