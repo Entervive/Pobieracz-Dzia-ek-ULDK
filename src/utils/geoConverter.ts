@@ -1,5 +1,4 @@
 import { parseWKB, type GeometryData as WKBGeometryData } from "./wkbParser";
-import { createDXFFile as createDXF } from "./dxfWriter";
 
 // Re-export the type for external use in App.tsx
 export type GeometryData = WKBGeometryData;
@@ -26,13 +25,4 @@ export function parseULDKResponse(data: string): GeometryData {
   }
 
   return parseWKB(wkbHex);
-}
-
-/**
- * A wrapper for the DXF creation utility.
- * @param geometry The geometry data to convert.
- * @returns A Blob containing the DXF file content.
- */
-export function createDXFFile(geometry: GeometryData): Blob {
-  return createDXF(geometry);
 }
